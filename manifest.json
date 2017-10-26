@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Forever pinned",
-  "permissions": ["storage","tabs"],
+  "permissions": ["storage","tabs", "bookmarks"],
   "background": {"scripts": ["js/q.js", "js/lodash.js", "js/startup.js"]},
   "options_page": "options.html",
   "description": "Allows you to open a set of pinned tabs when chrome starts up",

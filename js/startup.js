@@ -1,6 +1,6 @@
 // TODO: Clean up code
 // TODO: close process after run if option is not selected
-
+const CREATE_FOLDER_ERROR_MSG = 'Please create a bookmark folder called "Forever pinned" to put your pinned tabs there as bookmarks pages and put it anywhere';
 var buildTabs = {
   list:[],
   createSyncItems:function(){
@@ -8,18 +8,7 @@ var buildTabs = {
      * have the sync items already been create aka has the plugin
      * been run before or is this it's first run
      */
-    var deferItems = Q.defer();
     var deferOptions = Q.defer();
-
-    chrome.storage.sync.get('items', function(data){
-      if(typeof(data.items) === "undefined"){
-        chrome.storage.sync.set({items:[]}, function (data){
-          deferItems.resolve();
-        });
-      }else{
-        deferItems.resolve();
-      }
-    });
 
     chrome.storage.sync.get('options', function(data){
       if(typeof(data.options) === "undefined"){
@@ -31,18 +20,41 @@ var buildTabs = {
       }
     });
 
-    return [deferItems.promise, deferOptions.promise];
+    return [deferOptions.promise];
   },
   get:function(){
     /**
-     * get list of URL to open from google sync
+     * get list of URL to open from bookmarks
      * @type {buildTabs}
      */
     var self = this;
     var defer = Q.defer();
     defer.resolve('done');
-    chrome.storage.sync.get('items', function(data){
-      self.removeDups(data.items);
+    self.getUrls(self.removeDups.bind(self));
+    return defer.promise;
+    
+  },
+  getUrls: function(callback) {
+    var defer = Q.defer();
+    var self = this;
+    chrome.bookmarks.getTree(function(bookmarks){
+        var folder = searchForeverPinedFolder(bookmarks);
+        if(folder===-1) {
+            alert('"Forever pinned" folder not founded.' + CREATE_FOLDER_ERROR_MSG);
+            return;
+        }
+        if(!folder.children) {
+            alert('Founded a bookmark with name "Forever pinned", but is not a folder. ' + CREATE_FOLDER_ERROR_MSG);
+        }
+        var urlList =  folder.children.map(function(fpFolder, index){
+            if(fpFolder.children) {
+                return {};
+            }
+            return {
+                url: fpFolder.url
+            }
+        });
+        callback(urlList);
     });
     return defer.promise;
   },
@@ -53,7 +65,7 @@ var buildTabs = {
     var self = this;
      var createSyncItemsPromise = this.createSyncItems();
      Q.all(createSyncItemsPromise).then(function(){
-       self.closeDups();
+     self.closeDups();
      });
   },
   create:function(){
@@ -93,8 +105,7 @@ var buildTabs = {
       var list = [];
       var defer = Q.defer();
 
-      chrome.storage.sync.get('items', function(urlList){
-        var urlList = urlList.items;
+      self.getUrls(function(urlList){
 
         // clear list of urls
         for(var i=0; i < urlList.length; i++){
@@ -136,29 +147,32 @@ var buildTabs = {
     var domain = "";
 
     // reset list
-    this.list = [];
-    this.readAllTabs().then(function(openTabs){
+    self.list = [];
+    self.readAllTabs().then(function(openTabs){
       for(var i=0; i < openTabs.length; i++){
-        /* remove trailing slashes as google seem to want to add them */
-        if (openTabs[i].url.substr(-1) === '/') {
-          openTabs[i].url =  openTabs[i].url.substr(0, openTabs[i].url.length - 1);
-         }
-        
-        // remove params if configured so we can compare without them
+        /* remove parameters if configured so we can compare without them */
         if(applyOptions.options.ignoreParams) {
           openTabs[i].url =self._removeParams(openTabs[i].url);
         }
+        /* remove trailing slashes as google seem to want to add them */
+        openTabs[i].url =  self._removeSlash(openTabs[i].url);
+        
         open.push(openTabs[i].url);
       }
       for(var i=0; i < urlList.length; i++){
         list.push(urlList[i].url);
       }
       list.forEach(function(item){
-        var localItem = item;        
-        // remove params if configured
+        /* Local item var to clean it from extra / and parameters */ 
+        var localItem = item;
+        
+        /* remove parameterss if configured */
         if(applyOptions.options.ignoreParams) {
           localItem =self._removeParams(localItem);
         }
+        /* remove trailing slashes */
+        localItem = self._removeSlash(localItem);
+        
         if(!(open.indexOf(localItem)> -1)){
           self.list.push({url:item});
         }
@@ -233,6 +247,22 @@ var setupClick = {
         this.notRegistered = true;
     }
 };
+function searchForeverPinedFolder(bookmarks) {
+    for(var i=0; i<bookmarks.length; i++) {
+        folder = bookmarks[i];
+        if (folder.children) {
+            if(folder.title === 'Forever pinned') {
+                return folder;
+            } else {
+                var founded = searchForeverPinedFolder(folder.children);
+                if (founded != -1) {
+                    return founded;
+                }
+            }
+        }
+    }
+    return -1;
+}
 
 // start up the app crate tabs
 buildTabs.init();

@@ -21,48 +21,26 @@
 
   <div class="col-md-12">
     <h1>Forever pinned</h1>
-  <h2>Add new pinned tab</h2>
-
-  <div ng-controller="formCtrl">
-    <form ng-submit="addItem(item)" name="urlForm" novalidate>
-      <div class="grid-row">
-        <div class="grid-col8">
-          <input  type="text" name="url" ng-model="url" class="form-control" id="siteOne" urlvaildation placeholder="http://www.example.com">
-        </div>
-        <div class="grid-col2">
-          <input type="submit" class="btn btn-success" value="Add Url">
-        </div>
-      </div>
-      <p class="bg-warning" ng-show="!urlForm.$valid">Please enter a full url, make sure to include http:// or https://</p>
-    </form>
-  </div>
-
-    <div ng-controller="listCtrl" ng-show="items.length">
-      <h2>Current pinned tabs</h2>
-      <div class="grid-row url-item"  ng-repeat="item in items track by $index">
-        <div class="grid-col8">
-          <span>{{item.url}}</span>
-        </div>
-        <div class="grid-col2">
-      <button type="button" class="btn btn-danger" ng-click="remove(item, element)">Remove</button>
-          </div>
-      </div>
-    </div>
-
+    <h2>How to set up pinned pages</h2>
+    <p>
+        <label>Create a bookmarks folder and call it "Forever pinned", put inside this folder, as bookmarks, all the pages you whant to open in pinned mode.</label>
+    </p>
+  
   <div ng-controller="optionsCtrl">
     <h2>Settings</h2>
+    <form>
+      <p>
+      <input type="checkbox" ng-click="ignoreParamsChange()" ng-model="ignoreParams" value="{{ignoreParams}}" name="ignoreParams" />
+        <label>Ignore urls parameters</label>
+      </p>
+      <p class="bg-info">Ignore urls parameters when comparing openned and saved tabs (site.com/?param1=value....)</p>
+    </form>
     <form>
       <p>
       <input type="checkbox" ng-click="reopenChange()" ng-model="reopen" value="{{reopen}}" name="reopen" />
         <label>Reopen tabs when a new window is create</label>
       </p>
       <p class="bg-warning">You will need to restart chrome before settings take effect</p>
-    </form>
-    <form>
-      <p>
-      <input type="checkbox" ng-click="ignoreParamsChange()" ng-model="ignoreParams" value="{{ignoreParams}}" name="ignoreParams" />
-        <label>Ignore url parameters when comparing openned and saved tabs (site.com/?param1=value....)</label>
-      </p>
     </form>
   </div>
   <footer>Forever pinned created by <a href="http://www.scottw.io/">scottw.io</a> source is available on <a href="https://github.com/scottwio/forever-pinned">Forever pinned</a></footer>

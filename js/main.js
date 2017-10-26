@@ -79,22 +79,6 @@ app.service('optionService', function ($q) {
   return option;
 });
 
-app.controller('formCtrl', function ($scope, urlList) {
-  /**
-   * controller for the URL input form
-   * @returns {boolean}
-   */
-  $scope.addItem = function () {
-    if(!$scope.urlForm.$valid || $scope.urlForm.url.$viewValue === "" || typeof($scope.urlForm.url.$viewValue) === "undefined"){
-      $scope.urlForm.url.$setValidity('url', false);
-      return undefined;
-    }
-    var obj = {};
-    obj.url = $scope.url;
-    urlList.add(obj);
-  }
-});
-
 app.controller('optionsCtrl', function($scope, optionService){
   /**
    * Controller for the options form
@@ -111,46 +95,4 @@ app.controller('optionsCtrl', function($scope, optionService){
   $scope.ignoreParamsChange = function(){
     optionService.setIgnoreParams(!$scope.ignoreParams);
   }
-});
-
-app.controller('listCtrl', function ($scope, urlList, $q) {
-  /**
-   * Controller for the list of URLs
-   */
-  urlList.get().then(function (data) {
-    $scope.items = urlList.list;
-  });
-  $scope.remove = function (item) {
-    urlList.remove(item);
-  };
-});
-
-app.directive('urlvaildation', function () {
-  /**
-   * Directive that controllers the validation of an URL input
-   */
-  return {
-    require: 'ngModel',
-    link: function (scope, elem, attr, ngModel) {
-      // triggers on DOM changes
-      ngModel.$parsers.unshift(function (value) {
-        var vaild = false;
-        if (value !== "" && value.indexOf('https://') >= 0 || value.indexOf('http://') >= 0) {
-          vaild = true;
-        }
-
-        if(vaild) {
-          ngModel.$setValidity('url', true);
-          /* remove trailing slash */
-          if (value.substr(-1) === '/') {
-            return value.substr(0, value.length - 1);
-          }
-          return value;
-        } else {
-          ngModel.$setValidity('url', false);
-          return undefined;
-        }
-      });
-    }
-  };
 });
